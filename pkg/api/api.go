@@ -124,6 +124,8 @@ type StartOptions struct {
 	CascadeStop bool
 	// ExitCodeFrom return exit code from specified service
 	ExitCodeFrom string
+	// WaitCondition define condition to wait for before considering project is up
+	WaitCondition string
 }
 
 // RestartOptions group options of the Restart API

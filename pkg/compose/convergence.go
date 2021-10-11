@@ -261,9 +261,10 @@ func getContainerProgressName(container moby.Container) string {
 	return "Container " + getCanonicalContainerName(container)
 }
 
-func (s *composeService) waitDependencies(ctx context.Context, project *types.Project, service types.ServiceConfig) error {
+func (s *composeService) waitDependencies(ctx context.Context, project *types.Project, dependencies types.DependsOnConfig) error {
 	eg, _ := errgroup.WithContext(ctx)
-	for dep, config := range service.DependsOn {
+
+	for dep, config := range dependencies {
 		dep, config := dep, config
 		eg.Go(func() error {
 			ticker := time.NewTicker(500 * time.Millisecond)
@@ -544,7 +545,7 @@ func (s *composeService) isServiceCompleted(ctx context.Context, project *types.
 }
 
 func (s *composeService) startService(ctx context.Context, project *types.Project, service types.ServiceConfig) error {
-	err := s.waitDependencies(ctx, project, service)
+	err := s.waitDependencies(ctx, project, service.DependsOn)
 	if err != nil {
 		return err
 	}

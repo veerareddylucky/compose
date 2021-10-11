@@ -58,7 +58,20 @@ func (s *composeService) start(ctx context.Context, project *types.Project, opti
 		if err != nil {
 			return err
 		}
-		return s.startService(ctx, project, service)
+
+		err = s.startService(ctx, project, service)
+		if err != nil {
+			return err
+		}
+
+		if options.WaitCondition != "" {
+			return s.waitDependencies(ctx, project, types.DependsOnConfig{
+				name: types.ServiceDependency{
+					Condition: options.WaitCondition,
+				},
+			})
+		}
+		return nil
 	})
 	if err != nil {
 		return err

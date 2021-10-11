@@ -50,6 +50,7 @@ type upOptions struct {
 	noPrefix           bool
 	attachDependencies bool
 	attach             []string
+	wait               string
 }
 
 func (opts upOptions) apply(project *types.Project, services []string) error {
@@ -103,6 +104,9 @@ func upCommand(p *projectOptions, backend api.Service) *cobra.Command {
 			if up.exitCodeFrom != "" {
 				up.cascadeStop = true
 			}
+			if up.wait != "" {
+				up.Detach = true
+			}
 			if create.Build && create.noBuild {
 				return fmt.Errorf("--build and --no-build are incompatible")
 			}
@@ -148,6 +152,7 @@ func upCommand(p *projectOptions, backend api.Service) *cobra.Command {
 	flags.BoolVar(&up.attachDependencies, "attach-dependencies", false, "Attach to dependent containers.")
 	flags.BoolVar(&create.quietPull, "quiet-pull", false, "Pull without printing progress information.")
 	flags.StringArrayVar(&up.attach, "attach", []string{}, "Attach to service output.")
+	flags.StringVar(&up.wait, "wait", "", "Wait for services to reach condition. implies detached mode.")
 
 	return upCmd
 }
@@ -192,13 +197,23 @@ func runUp(ctx context.Context, backend api.Service, createOptions createOptions
 		return backend.Create(ctx, project, create)
 	}
 
+	switch upOptions.wait {
+	case types.ServiceConditionCompletedSuccessfully:
+	case types.ServiceConditionHealthy:
+	case types.ServiceConditionStarted:
+	case "":
+	default:
+		return fmt.Errorf("unsupported condition: %q", upOptions.wait)
+	}
+
 	return backend.Up(ctx, project, api.UpOptions{
 		Create: create,
 		Start: api.StartOptions{
-			Attach:       consumer,
-			AttachTo:     attachTo,
-			ExitCodeFrom: upOptions.exitCodeFrom,
-			CascadeStop:  upOptions.cascadeStop,
+			Attach:        consumer,
+			AttachTo:      attachTo,
+			ExitCodeFrom:  upOptions.exitCodeFrom,
+			CascadeStop:   upOptions.cascadeStop,
+			WaitCondition: upOptions.wait,
 		},
 	})
 }
