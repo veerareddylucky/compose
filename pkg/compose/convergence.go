@@ -263,7 +263,6 @@ func getContainerProgressName(container moby.Container) string {
 
 func (s *composeService) waitDependencies(ctx context.Context, project *types.Project, dependencies types.DependsOnConfig) error {
 	eg, _ := errgroup.WithContext(ctx)
-
 	for dep, config := range dependencies {
 		dep, config := dep, config
 		eg.Go(func() error {
@@ -517,6 +516,7 @@ func (s *composeService) isServiceHealthy(ctx context.Context, project *types.Pr
 		if err != nil {
 			return false, err
 		}
+
 		if container.State == nil || container.State.Health == nil {
 			return false, fmt.Errorf("container for service %q has no healthcheck configured", service)
 		}

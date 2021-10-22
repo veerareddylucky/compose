@@ -18,6 +18,7 @@ package compose
 
 import (
 	"context"
+	"strings"
 
 	"github.com/compose-spec/compose-go/types"
 	moby "github.com/docker/docker/api/types"
@@ -64,19 +65,46 @@ func (s *composeService) start(ctx context.Context, project *types.Project, opti
 			return err
 		}
 
-		if options.WaitCondition != "" {
-			return s.waitDependencies(ctx, project, types.DependsOnConfig{
-				name: types.ServiceDependency{
-					Condition: options.WaitCondition,
-				},
-			})
-		}
 		return nil
 	})
 	if err != nil {
 		return err
 	}
+
+	if len(options.WaitCondition) != 0 {
+		err := s.waitServices(ctx, project, options.WaitCondition)
+		if err != nil {
+			return err
+		}
+	}
+
 	return eg.Wait()
+}
+
+func (s *composeService) waitServices(ctx context.Context, project *types.Project, options []string) error {
+	depends := types.DependsOnConfig{}
+	for _, c := range options {
+		split := strings.SplitN(c, ":", 2)
+		if len(split) == 2 {
+			service := split[0]
+			condition := "service_" + split[1]
+			depends[service] = types.ServiceDependency{
+				Condition: condition,
+			}
+		} else {
+			condition := "service_" + split[0]
+			for _, s := range project.Services {
+				depends[s.Name] = types.ServiceDependency{
+					Condition: condition,
+				}
+			}
+		}
+	}
+	err := s.waitDependencies(ctx, project, depends)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 type containerWatchFn func(container moby.Container) error
