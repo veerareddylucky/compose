@@ -134,7 +134,7 @@ func upCommand(p *projectOptions, backend api.Service) *cobra.Command {
 	flags.BoolVar(&up.attachDependencies, "attach-dependencies", false, "Attach to dependent containers.")
 	flags.BoolVar(&create.quietPull, "quiet-pull", false, "Pull without printing progress information.")
 	flags.StringArrayVar(&up.attach, "attach", []string{}, "Attach to service output.")
-	flags.StringArrayVar(&up.wait, "wait", []string{}, "[SERVICE:]CONDITION Wait for service(s) to reach condition (started|healthy|completed_successfully). implies detached mode.")
+	flags.StringArrayVar(&up.wait, "wait", []string{}, "[SERVICE:]CONDITION Wait for service(s) to reach condition (started|healthy|completed_successfully). Implies detached mode.")
 
 	return upCmd
 }

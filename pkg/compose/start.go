@@ -18,6 +18,8 @@ package compose
 
 import (
 	"context"
+	"fmt"
+	"github.com/docker/compose/v2/pkg/utils"
 	"strings"
 
 	"github.com/compose-spec/compose-go/types"
@@ -60,12 +62,7 @@ func (s *composeService) start(ctx context.Context, project *types.Project, opti
 			return err
 		}
 
-		err = s.startService(ctx, project, service)
-		if err != nil {
-			return err
-		}
-
-		return nil
+		return s.startService(ctx, project, service)
 	})
 	if err != nil {
 		return err
@@ -92,19 +89,23 @@ func (s *composeService) waitServices(ctx context.Context, project *types.Projec
 				Condition: condition,
 			}
 		} else {
-			condition := "service_" + split[0]
+			condition := split[0]
+			if len(condition) == 0 {
+				return errors.New("a wait condition must be set")
+			}
+			serviceCondition := "service_" + condition
+			enum := []string{ types.ServiceConditionStarted, types.ServiceConditionHealthy, types.ServiceConditionCompletedSuccessfully }
+			if !utils.StringContains(enum, serviceCondition) {
+				return fmt.Errorf("unsupported service condition %s", condition)
+			}
 			for _, s := range project.Services {
 				depends[s.Name] = types.ServiceDependency{
-					Condition: condition,
+					Condition: serviceCondition,
 				}
 			}
 		}
 	}
-	err := s.waitDependencies(ctx, project, depends)
-	if err != nil {
-		return err
-	}
-	return nil
+	return s.waitDependencies(ctx, project, depends)
 }
 
 type containerWatchFn func(container moby.Container) error
