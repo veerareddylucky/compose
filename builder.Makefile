@@ -46,6 +46,7 @@ compose-plugin:
 
 .PHONY: cross
 cross:
+        GOOS=linux   GOARCH=ppc64 $(GO_BUILD) $(TAGS) -o $(COMPOSE_BINARY)-linux-ppc64le ./cmd
 	GOOS=linux   GOARCH=amd64 $(GO_BUILD) $(TAGS) -o $(COMPOSE_BINARY)-linux-x86_64 ./cmd
 	GOOS=linux   GOARCH=arm64 $(GO_BUILD) $(TAGS) -o $(COMPOSE_BINARY)-linux-aarch64 ./cmd
 	GOOS=linux   GOARM=6 GOARCH=arm $(GO_BUILD) $(TAGS) -o $(COMPOSE_BINARY)-linux-armv6 ./cmd
